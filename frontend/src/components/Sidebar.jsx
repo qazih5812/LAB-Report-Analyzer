@@ -46,29 +46,29 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile Drawer Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+          className="sidebar-backdrop"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      <aside
-        className={`fixed top-0 bottom-0 start-0 z-50 w-64 flex flex-col bg-card border-e border-border select-none transition-transform duration-300 ease-in-out
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
-      >
-        {/* Brand Header with Stethoscope + Flask Logo */}
-        <div className="p-5 border-b border-border/80">
+      <aside className={`citylab-sidebar ${mobileOpen ? "mobile-open" : ""}`}>
+        {/* Top Brand Header */}
+        <div className="sidebar-header">
           <div
-            className="flex items-center gap-3 cursor-pointer"
+            className="sidebar-brand"
             onClick={() => setActiveTab("dashboard")}
+            title="CityLab Diagnostics"
           >
-            {/* Custom SVG Logo matching screenshot */}
-            <div className="w-11 h-11 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-800/40 flex items-center justify-center shrink-0 shadow-xs relative">
-              <svg viewBox="0 0 40 40" className="w-8 h-8">
-                {/* Flask Body */}
+            {/* Logo Emblem: Stethoscope wrapping chemical flask */}
+            <div className="sidebar-logo-box">
+              <svg
+                viewBox="0 0 40 40"
+                style={{ width: 28, height: 28, display: "block" }}
+              >
+                {/* Chemistry Flask */}
                 <path
                   d="M16 6 L24 6 M20 6 L20 14 L12 28 C10 31.5 12.5 35 16.5 35 L23.5 35 C27.5 35 30 31.5 28 28 L20 14"
                   fill="none"
@@ -85,38 +85,39 @@ export default function Sidebar({
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
-                {/* Bubbles / Reactive dots */}
+                {/* Reactive particles */}
                 <circle cx="17" cy="28" r="1.5" fill="#f43f5e" />
                 <circle cx="23" cy="27" r="1.8" fill="#008060" />
                 <circle cx="19" cy="31" r="1.2" fill="#0284c7" />
               </svg>
             </div>
 
-            <div className="flex flex-col">
-              <span className="font-extrabold text-xl text-[#0f172a] dark:text-white tracking-tight leading-none">
-                City<span className="text-[#00594C] dark:text-teal-400">Lab</span>
+            <div className="sidebar-brand-text">
+              <span className="sidebar-title">
+                City<span className="brand-teal">Lab</span>
               </span>
-              <span className="text-[9px] font-bold text-[#f43f5e] tracking-wider uppercase mt-1 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#f43f5e]" />
-                Diagnostic AI Suite
+              <span className="sidebar-suite-badge">
+                <span className="badge-bullet" />
+                DIAGNOSTIC AI SUITE
               </span>
             </div>
           </div>
 
-          {/* "+ New Analysis" Action Button */}
+          {/* "+ New Analysis" Button */}
           <button
             onClick={onOpenUpload}
-            className="w-full mt-5 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#00594C] hover:bg-[#00473c] text-white font-bold text-xs shadow-md shadow-[#00594C]/20 transition-all hover:scale-[1.01]"
+            className="btn-new-analysis"
+            title="Upload and analyze a new laboratory report"
           >
-            <div className="w-4 h-4 rounded-full border-1.5 border-white flex items-center justify-center">
-              <Plus className="w-3 h-3 stroke-[3]" />
+            <div className="new-analysis-icon-circle">
+              <Plus size={14} strokeWidth={3} />
             </div>
             <span>New Analysis</span>
           </button>
         </div>
 
-        {/* Navigation List */}
-        <div className="flex-1 overflow-y-auto py-3 px-3 space-y-1 custom-scrollbar">
+        {/* Navigation Items List */}
+        <nav className="sidebar-nav">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -125,37 +126,27 @@ export default function Sidebar({
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-start
-                  ${isActive
-                    ? "bg-[#eef2ff] dark:bg-indigo-950/40 text-[#4f46e5] dark:text-indigo-400 font-bold shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
-                  }
-                `}
+                className={`sidebar-nav-item ${isActive ? "active" : ""}`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon
-                    className={`w-4 h-4 shrink-0 transition-colors
-                      ${isActive ? "text-[#4f46e5] dark:text-indigo-400" : "text-muted-foreground"}
-                    `}
-                  />
+                <div className="nav-item-left">
+                  <Icon size={18} className="nav-icon" />
                   <span>{item.label}</span>
                 </div>
-
                 {item.isExternal && (
-                  <ExternalLink className="w-3 h-3 opacity-60 shrink-0" />
+                  <ExternalLink size={14} className="nav-ext-icon" />
                 )}
               </button>
             );
           })}
-        </div>
+        </nav>
 
-        {/* Bottom Version Indicator */}
-        <div className="p-4 border-t border-border/80 flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold text-[11px]">CityLab AI v1.1</span>
+        {/* Footer Version Tag */}
+        <div className="sidebar-footer">
+          <div className="footer-status">
+            <span className="footer-status-dot" />
+            <span className="footer-version">CityLab AI v1.1</span>
           </div>
-          <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-md font-mono">CLIA-Safe</span>
+          <span className="footer-badge">CLIA-Safe</span>
         </div>
       </aside>
     </>
