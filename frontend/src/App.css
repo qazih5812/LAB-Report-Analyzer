@@ -1536,7 +1536,7 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
   border-radius: 14px;
   border: 1px solid var(--border-light);
   text-align: center;
@@ -1546,26 +1546,162 @@
 .loading-state h3 {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 .loading-state p {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .error-banner {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #fef2f2;
-  border: 1px solid #fca5a5;
-  color: #991b1b;
+  background-color: var(--status-urgent-bg);
+  border: 1px solid var(--status-urgent-border);
+  color: var(--status-urgent-text);
   padding: 1rem 1.25rem;
   border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 600;
 }
+
+/* ========================================================
+   ClyHealth Left Sidebar & Modern Shell Layout
+   ======================================================== */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  position: relative;
+}
+
+.main-viewport {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  transition: margin 0.3s ease;
+}
+
+/* Margin offset for fixed sidebar (LTR) */
+html:not([dir="rtl"]) .main-viewport.sidebar-expanded {
+  margin-left: 16rem; /* 256px */
+}
+html:not([dir="rtl"]) .main-viewport.sidebar-collapsed {
+  margin-left: 5rem; /* 80px */
+}
+
+/* Margin offset for fixed sidebar (RTL) */
+html[dir="rtl"] .main-viewport.sidebar-expanded {
+  margin-right: 16rem; /* 256px */
+  margin-left: 0;
+}
+html[dir="rtl"] .main-viewport.sidebar-collapsed {
+  margin-right: 5rem; /* 80px */
+  margin-left: 0;
+}
+
+@media (max-width: 1024px) {
+  html:not([dir="rtl"]) .main-viewport.sidebar-expanded,
+  html:not([dir="rtl"]) .main-viewport.sidebar-collapsed,
+  html[dir="rtl"] .main-viewport.sidebar-expanded,
+  html[dir="rtl"] .main-viewport.sidebar-collapsed {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+.view-content-container {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Voice listen button */
+.voice-listen-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.voice-listen-pill:hover {
+  background-color: rgba(13, 148, 136, 0.22);
+}
+.voice-listen-pill.active {
+  background-color: #0d9488;
+  color: #ffffff;
+  border-color: #0d9488;
+  animation: pulseGlow 1.5s infinite ease-in-out;
+}
+
+/* Dark mode tweaks for existing components */
+html.dark .navbar {
+  background-color: var(--bg-card);
+  border-bottom-color: var(--border-light);
+}
+html.dark .patient-sidebar {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .patient-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .patient-card:hover {
+  background-color: var(--bg-card-subtle);
+}
+html.dark .patient-card.selected {
+  background-color: rgba(13, 148, 136, 0.15);
+  border-color: var(--color-primary-light);
+}
+html.dark .demographics-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .summary-section {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .biomarker-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .doctor-questions-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .chat-drawer {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .chat-bubble.assistant-bubble {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-light);
+  color: var(--text-main);
+}
+html.dark .upload-modal {
+  background-color: var(--bg-card);
+  border-color: var(--border-light);
+}
+html.dark .upload-dropzone {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-light);
+}
+
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 1024px) {

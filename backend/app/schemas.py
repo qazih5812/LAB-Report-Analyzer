@@ -51,6 +51,8 @@ class AnalysisRequest(BaseModel):
     patient_id: str
     override_age: Optional[int] = None
     override_sex: Optional[str] = None
+    language: Optional[str] = "en"  # "en", "ur", "roman_ur", "ar"
+    eli10: Optional[bool] = False   # Explain Like I'm 10 simplicity toggle
 
 class AnalysisResponse(BaseModel):
     patient_id: str
@@ -66,10 +68,18 @@ class AnalysisResponse(BaseModel):
     doctor_questions: List[str] = []
     disclaimer: str
     provider_used: str = "deterministic"
+    language: str = "en"
 
 class ChatRequest(BaseModel):
     active_patient_id: str
     query: str
+    language: Optional[str] = "en"  # "en", "ur", "roman_ur", "ar"
+
+class CitationInfo(BaseModel):
+    source: str
+    url: str
+    topic: str
+    retrieved_at: str
 
 class ChatResponse(BaseModel):
     active_patient_id: str
@@ -77,3 +87,27 @@ class ChatResponse(BaseModel):
     response: str
     reason: Optional[str] = None
     provider_used: str = "deterministic"
+    language: str = "en"
+    citations: List[CitationInfo] = []
+    is_emergency: bool = False
+
+class ReportHistoryItem(BaseModel):
+    id: int
+    patient_id: str
+    patient_name: str
+    mrn: str
+    report_date: str
+    total_tests: int
+    normal_count: int
+    low_count: int
+    high_count: int
+    urgent_count: int
+    has_urgent: bool
+    summary_excerpt: Optional[str] = None
+    created_at: str
+
+class TrendPoint(BaseModel):
+    date: str
+    value: float
+    unit: str
+    status: str

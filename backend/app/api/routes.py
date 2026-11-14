@@ -11,6 +11,8 @@ from app.schemas import (
     ChatRequest,
     ChatResponse,
     ClassifiedTestResult,
+    ReportHistoryItem,
+    TrendPoint,
 )
 from app.core.parser import load_all_reports, parse_patient_file, parse_patient_content
 from app.core.classifier import classify_test_result
@@ -18,6 +20,12 @@ from app.core.summary import MANDATORY_DISCLAIMER
 from app.services.llm_provider import llm_manager
 from app.services.explainer import generate_enhanced_explanation
 from app.services.chat import handle_patient_chat
+from app.db.database import (
+    record_report_history,
+    get_report_history,
+    delete_report_history,
+    get_patient_trend
+)
 
 router = APIRouter(prefix="/api")
 
@@ -136,12 +144,31 @@ def analyze_report(request: AnalysisRequest):
         classified_results.append(classified)
 
     # Generate layman explanation through LLM layer with guardrails & fallback
+    selected_lang = request.language or "en"
+    eli10_mode = bool(request.eli10)
+
     summary, doctor_questions, urgent_warning, provider_used = generate_enhanced_explanation(
         patient_name=report.patient_name,
         results=classified_results,
         is_demographics_missing=demographics_missing,
-        demographics_message=demo_prompt
+        demographics_message=demo_prompt,
+        language=selected_lang,
+        eli10=eli10_mode,
     )
+
+    # Persist report snapshot to SQLite history for longitudinal tracking
+    try:
+        record_report_history(
+            patient_id=report.patient_id,
+            patient_name=report.patient_name,
+            mrn=report.mrn,
+            report_date=getattr(report, "date_of_issuance", "2026-11-14"),
+            results=[c.model_dump() for c in classified_results],
+            has_urgent=has_urgent,
+            summary_excerpt=summary[:200] + "..." if len(summary) > 200 else summary
+        )
+    except Exception as e:
+        print(f"Warning: could not record history: {e}")
 
     return AnalysisResponse(
         patient_id=report.patient_id,
@@ -166,7 +193,28 @@ def analyze_report(request: AnalysisRequest):
         doctor_questions=doctor_questions,
         disclaimer=MANDATORY_DISCLAIMER,
         provider_used=provider_used,
+        language=selected_lang,
     )
+
+@router.get("/history", response_model=List[ReportHistoryItem])
+def get_history(limit: int = Query(10, ge=1, le=50), search: Optional[str] = None):
+    """Fetches persistent report history with normal, low, high and urgent biomarker counts."""
+    history_data = get_report_history(limit=limit, search=search)
+    return [ReportHistoryItem(**item) for item in history_data]
+
+@router.delete("/history/{report_id}")
+def delete_history_item(report_id: int):
+    """Deletes a patient report from persistent history."""
+    success = delete_report_history(report_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"History record {report_id} not found.")
+    return {"success": True, "deleted_id": report_id}
+
+@router.get("/trends/{patient_id}/{test_name}", response_model=List[TrendPoint])
+def get_trends(patient_id: str, test_name: str):
+    """Retrieves longitudinal test trends over time for a given patient."""
+    points = get_patient_trend(patient_id=patient_id.strip().upper(), test_name=test_name.strip())
+    return [TrendPoint(**p) for p in points]
 
 @router.post("/chat", response_model=ChatResponse)
 def patient_chat(request: ChatRequest):
@@ -183,12 +231,19 @@ def patient_chat(request: ChatRequest):
         for r in active_report.raw_results
     ]
 
+    selected_lang = request.language or "en"
+
     # Process through contextual chat service with prompt-injection defense and privacy lock
-    allowed, response_text, reason, provider_used = handle_patient_chat(
+    chat_res = handle_patient_chat(
         active_report=active_report,
         classified_results=classified_results,
-        raw_query=request.query
+        raw_query=request.query,
+        language=selected_lang
     )
+
+    allowed, response_text, reason, provider_used = chat_res[0], chat_res[1], chat_res[2], chat_res[3]
+    citations = getattr(chat_res, "citations", [])
+    is_emergency = getattr(chat_res, "is_emergency", False)
 
     return ChatResponse(
         active_patient_id=active_report.patient_id,
@@ -196,4 +251,7 @@ def patient_chat(request: ChatRequest):
         response=response_text,
         reason=reason,
         provider_used=provider_used,
+        language=selected_lang,
+        citations=citations,
+        is_emergency=is_emergency,
     )

@@ -26,21 +26,26 @@ def generate_enhanced_explanation(
     patient_name: str,
     results: List[ClassifiedTestResult],
     is_demographics_missing: bool = False,
-    demographics_message: Optional[str] = None
+    demographics_message: Optional[str] = None,
+    language: str = "en",
+    eli10: bool = False
 ) -> Tuple[str, List[str], Optional[str], str]:
     """
     Generates layman explanation and doctor questions using Provider Priority:
     Gemini -> Groq -> OpenRouter -> Deterministic Fallback.
+    Supports English, Urdu, Roman Urdu, and Arabic, and Explain-Like-I'm-10 mode.
     Validates output through clinical guardrails.
     Returns:
         (layman_summary, doctor_questions, urgent_warning, provider_used)
     """
-    # 1. Generate guaranteed deterministic baseline
+    # 1. Generate guaranteed deterministic baseline in target language
     det_summary, det_questions, det_warning = deterministic_summary_fn(
         patient_name=patient_name,
         results=results,
         is_demographics_missing=is_demographics_missing,
-        demographics_message=demographics_message
+        demographics_message=demographics_message,
+        language=language,
+        eli10=eli10
     )
 
     has_urgent = any(r.is_urgent for r in results)
@@ -49,6 +54,21 @@ def generate_enhanced_explanation(
     active_provider = llm_manager.get_active_primary_provider()
     if active_provider == "deterministic":
         return det_summary, det_questions, det_warning, "deterministic"
+
+    # Language instruction
+    lang_map = {
+        "ur": "Urdu (اردو)",
+        "roman_ur": "Roman Urdu (Urdu written in English alphabet)",
+        "ar": "Arabic (العربية)",
+        "en": "English"
+    }
+    lang_name = lang_map.get(language, "English")
+
+    simplicity_instruction = (
+        "EXPLAIN LIKE I'M 10 (ELI10): Use extremely simple child-friendly words and fun bodily analogies (e.g. oxygen delivery trucks, superhero white blood cells)."
+        if eli10 else
+        "Explain in simple Class 8 (8th grade) everyday language."
+    )
 
     # 2. Build structured prompt for LLM
     results_prompt_lines = []
@@ -63,14 +83,18 @@ def generate_enhanced_explanation(
         )
 
     user_prompt = f"""Patient: {patient_name}
+Language Required: {lang_name} ({language})
+Simplicity Level: {simplicity_instruction}
 Demographics Note: {demographics_message or 'Demographics complete'}
 Certified Laboratory Results:
 {chr(10).join(results_prompt_lines)}
 
-Please write:
-1. A simple Class 8 explanation of these results.
-2. A numbered list of 3 to 5 questions to ask the doctor.
-3. If urgent values exist, include the urgent warning: "URGENT: You must see a doctor today".
+INSTRUCTIONS:
+1. Write an educational explanation of these results in {lang_name}.
+2. IMPORTANT: Keep all medical test names (e.g. Hemoglobin, Fasting Blood Sugar, ALT) and measurement units (g/dL, mg/dL, cells/mcL) unchanged.
+3. Formulate a numbered list of exactly 3 to 5 questions in {lang_name} for the patient to ask their doctor.
+4. If urgent values exist, include the urgent medical warning advising to see a doctor today.
+5. NEVER state or imply a medical diagnosis (Directive 2).
 """
 
     # 3. Call LLM through provider priority manager
@@ -96,7 +120,6 @@ Please write:
             extracted_questions.append(q_match.group(1).strip())
 
     if len(extracted_questions) < 3 or len(extracted_questions) > 5:
-        # Use verified deterministic questions if extraction was abnormal
         final_questions = det_questions
     else:
         final_questions = extracted_questions
