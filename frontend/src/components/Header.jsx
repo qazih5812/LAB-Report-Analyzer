@@ -1,15 +1,14 @@
 import React from "react";
 import {
   Menu,
+  Search,
+  Volume2,
+  VolumeX,
+  User,
+  ChevronRight,
   Sun,
   Moon,
-  Sparkles,
-  Globe,
-  UploadCloud,
-  CheckCircle2,
-  Cpu,
 } from "lucide-react";
-import { translations } from "../locales/translations";
 
 export default function Header({
   activeTab,
@@ -17,27 +16,38 @@ export default function Header({
   setLanguage,
   theme,
   setTheme,
-  eli10,
-  setEli10,
-  onOpenUpload,
-  setMobileOpen,
   activePatientName,
-  providerStatus,
+  activePatientId,
+  isSpeaking,
+  onToggleSpeech,
+  setMobileOpen,
+  onSelectPatientsTab,
 }) {
-  const t = translations[language]?.header || translations.en.header;
-  const navT = translations[language]?.nav || translations.en.nav;
+  const getTabLabel = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return "Dashboard";
+      case "patients":
+        return "Patients";
+      case "analyzeReport":
+        return "Analyze Report";
+      case "analysisResults":
+        return "Analysis Results";
+      case "aiAssistant":
+        return "AI Assistant";
+      case "howItWorks":
+        return "How It Works";
+      case "liveAudit":
+        return "Live 14/14 Audit";
+      default:
+        return "Dashboard";
+    }
+  };
 
-  const languages = [
-    { code: "en", label: "English", flag: "🇬🇧" },
-    { code: "ur", label: "اردو (Urdu)", flag: "🇵🇰", dir: "rtl" },
-    { code: "roman_ur", label: "Roman Urdu", flag: "🇵🇰" },
-    { code: "ar", label: "العربية (Arabic)", flag: "🇸🇦", dir: "rtl" },
-  ];
-
-  const handleLanguageChange = (newLang) => {
-    setLanguage(newLang);
-    localStorage.setItem("citylab_language", newLang);
-    if (newLang === "ur" || newLang === "ar") {
+  const handleLanguageChange = (langCode) => {
+    setLanguage(langCode);
+    localStorage.setItem("citylab_language", langCode);
+    if (langCode === "ur" || langCode === "ar") {
       document.documentElement.dir = "rtl";
     } else {
       document.documentElement.dir = "ltr";
@@ -45,123 +55,113 @@ export default function Header({
   };
 
   const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("citylab_theme", nextTheme);
-    if (nextTheme === "dark") {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("citylab_theme", next);
+    if (next === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
   };
 
-  const getPageTitle = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return navT.dashboard;
-      case "myReports":
-        return navT.myReports;
-      case "aiAssistant":
-        return navT.aiAssistant;
-      case "healthInsights":
-        return navT.healthInsights;
-      case "doctorQuestions":
-        return navT.doctorQuestions;
-      case "history":
-        return navT.history;
-      case "settings":
-        return navT.settings;
-      default:
-        return navT.dashboard;
-    }
-  };
-
   return (
-    <header className="sticky top-0 z-30 h-18 bg-card/85 backdrop-blur-md border-b border-border flex items-center justify-between px-4 sm:px-6 transition-colors">
-      {/* Left Title & Mobile Hamburger */}
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-30 h-16 bg-card/90 backdrop-blur-md border-b border-border flex items-center justify-between px-4 sm:px-6 transition-colors">
+      {/* Left: Breadcrumbs and Mobile Hamburger */}
+      <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={() => setMobileOpen(true)}
-          className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
-          aria-label="Open navigation menu"
+          className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary"
+          aria-label="Open sidebar"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
-              {getPageTitle()}
-            </h1>
-            {activePatientName && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-500/10 text-teal-700 dark:text-teal-400 border border-teal-500/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-                {activePatientName}
-              </span>
-            )}
-          </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline-block">
-            {translations[language]?.appSubtitle || translations.en.appSubtitle}
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground truncate">
+          <span className="text-foreground font-bold">CityLab</span>
+          <ChevronRight className="w-3.5 h-3.5 opacity-50 shrink-0" />
+          <span className="text-[#00594C] dark:text-teal-400 font-bold truncate">
+            {getTabLabel()}
           </span>
         </div>
       </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* ELI10 Toggle Pill */}
+      {/* Right Controls Matching Screenshot */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Search Pill with Ctrl+J shortcut */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/80 border border-border/80 text-xs text-muted-foreground cursor-pointer hover:border-teal-500/50 transition-colors">
+          <Search className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-mono bg-card px-1.5 py-0.2 rounded border border-border/60">
+            J
+          </span>
+        </div>
+
+        {/* Segmented Language Pills [ EN | اردو | Roman Urdu | العربية ] */}
+        <div className="flex items-center bg-secondary/90 rounded-full p-0.5 border border-border/80 text-xs font-semibold">
+          {[
+            { code: "en", label: "EN" },
+            { code: "ur", label: "اردو" },
+            { code: "roman_ur", label: "Roman Urdu" },
+            { code: "ar", label: "العربية" },
+          ].map((l) => {
+            const isSel = language === l.code;
+            return (
+              <button
+                key={l.code}
+                onClick={() => handleLanguageChange(l.code)}
+                className={`px-2.5 py-1 rounded-full text-xs transition-all
+                  ${isSel
+                    ? "bg-[#00594C] text-white font-bold shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                  }
+                `}
+              >
+                {l.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Listen Pill Button */}
         <button
-          onClick={() => setEli10(!eli10)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border
-            ${eli10
-              ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/40 shadow-xs"
-              : "bg-secondary text-muted-foreground border-transparent hover:text-foreground"
+          onClick={onToggleSpeech}
+          className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all
+            ${isSpeaking
+              ? "bg-teal-600 text-white border-teal-600 shadow-xs animate-pulse"
+              : "bg-secondary/80 hover:bg-secondary text-foreground border-border/80"
             }
           `}
-          title={t.eli10Tooltip}
+          title="Read current clinical overview aloud"
         >
-          <Sparkles className={`w-3.5 h-3.5 ${eli10 ? "text-amber-700 dark:text-amber-400" : ""}`} />
-          <span className="hidden md:inline">{t.eli10}</span>
-          <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${eli10 ? "bg-amber-700 text-white" : "bg-muted text-muted-foreground"}`}>
-            {eli10 ? "ON" : "OFF"}
+          {isSpeaking ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-teal-600" />}
+          <span>Listen</span>
+        </button>
+
+        {/* Backend Status Pill */}
+        <div className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/20 text-xs font-semibold">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>Backend: Connected</span>
+        </div>
+
+        {/* Active Patient Pill */}
+        <button
+          onClick={onSelectPatientsTab}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary hover:bg-secondary/80 text-foreground border border-border/80 text-xs font-semibold transition-colors"
+          title="Switch Active Patient"
+        >
+          <User className="w-3.5 h-3.5 text-teal-600" />
+          <span className="truncate max-w-[130px] sm:max-w-[180px]">
+            Patient: {activePatientName || "Diana Prince"} ({activePatientId || "P004"})
           </span>
         </button>
 
-        {/* Language Selector Dropdown */}
-        <div className="relative flex items-center">
-          <div className="flex items-center gap-1 bg-secondary rounded-lg px-2.5 py-1.5 border border-border/60 text-xs font-medium">
-            <Globe className="w-3.5 h-3.5 text-muted-foreground" />
-            <select
-              value={language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
-              className="bg-transparent text-foreground outline-none cursor-pointer text-xs font-medium pr-1"
-              aria-label="Select Application Language"
-            >
-              {languages.map((l) => (
-                <option key={l.code} value={l.code} className="bg-card text-foreground">
-                  {l.flag} {l.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Theme Toggle Button */}
+        {/* Theme Toggle (Sun/Moon) */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/50 transition-colors"
-          title={theme === "dark" ? t.themeLight : t.themeDark}
-          aria-label="Toggle display theme"
+          className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/60 transition-colors"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
           {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
-        </button>
-
-        {/* Quick Upload Action Button */}
-        <button
-          onClick={onOpenUpload}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs shadow-xs transition-colors"
-        >
-          <UploadCloud className="w-3.5 h-3.5" />
-          <span>{t.uploadBtn}</span>
         </button>
       </div>
     </header>

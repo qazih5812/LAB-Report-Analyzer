@@ -1,47 +1,41 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   LayoutDashboard,
-  UploadCloud,
-  FileSpreadsheet,
-  BotMessageSquare,
-  Activity,
-  Stethoscope,
-  History,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  ShieldCheck,
-  User,
-  HeartPulse,
+  Users,
+  FileUp,
+  Microscope,
+  Bot,
+  HelpCircle,
+  FileCheck2,
+  Code2,
+  Plus,
+  ExternalLink,
 } from "lucide-react";
-import { translations } from "../locales/translations";
 
 export default function Sidebar({
   activeTab,
   setActiveTab,
-  language = "en",
   onOpenUpload,
-  isCollapsed,
-  setIsCollapsed,
+  totalPatients = 14,
   mobileOpen,
   setMobileOpen,
 }) {
-  const t = translations[language]?.nav || translations.en.nav;
-
   const navItems = [
-    { id: "dashboard", label: t.dashboard, icon: LayoutDashboard },
-    { id: "upload", label: t.upload, icon: UploadCloud, isAction: true },
-    { id: "myReports", label: t.myReports, icon: FileSpreadsheet },
-    { id: "aiAssistant", label: t.aiAssistant, icon: BotMessageSquare },
-    { id: "healthInsights", label: t.healthInsights, icon: Activity },
-    { id: "doctorQuestions", label: t.doctorQuestions, icon: Stethoscope },
-    { id: "history", label: t.history, icon: History },
-    { id: "settings", label: t.settings, icon: Settings },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "patients", label: `Patients (${totalPatients})`, icon: Users },
+    { id: "analyzeReport", label: "Analyze Report", icon: FileUp, action: onOpenUpload },
+    { id: "analysisResults", label: "Analysis Results", icon: Microscope },
+    { id: "aiAssistant", label: "AI Assistant", icon: Bot },
+    { id: "howItWorks", label: "How It Works", icon: HelpCircle },
+    { id: "liveAudit", label: "Live 14/14 Audit", icon: FileCheck2 },
+    { id: "openapiDocs", label: "OpenAPI Docs", icon: Code2, isExternal: true },
   ];
 
   const handleNavClick = (item) => {
-    if (item.isAction) {
-      onOpenUpload();
+    if (item.action) {
+      item.action();
+    } else if (item.isExternal) {
+      window.open("http://localhost:8000/docs", "_blank");
     } else {
       setActiveTab(item.id);
     }
@@ -61,123 +55,107 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`fixed top-0 bottom-0 start-0 z-50 flex flex-col bg-sidebar border-e border-sidebar-border transition-all duration-300 ease-in-out select-none
-          ${isCollapsed ? "w-20" : "w-64"}
+        className={`fixed top-0 bottom-0 start-0 z-50 w-64 flex flex-col bg-card border-e border-border select-none transition-transform duration-300 ease-in-out
           ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        {/* Brand Header */}
-        <div className="h-18 flex items-center justify-between px-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => setActiveTab("dashboard")}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-teal-500/20 shrink-0">
-              <HeartPulse className="w-6 h-6 animate-pulse" />
+        {/* Brand Header with Stethoscope + Flask Logo */}
+        <div className="p-5 border-b border-border/80">
+          <div
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => setActiveTab("dashboard")}
+          >
+            {/* Custom SVG Logo matching screenshot */}
+            <div className="w-11 h-11 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-800/40 flex items-center justify-center shrink-0 shadow-xs relative">
+              <svg viewBox="0 0 40 40" className="w-8 h-8">
+                {/* Flask Body */}
+                <path
+                  d="M16 6 L24 6 M20 6 L20 14 L12 28 C10 31.5 12.5 35 16.5 35 L23.5 35 C27.5 35 30 31.5 28 28 L20 14"
+                  fill="none"
+                  stroke="#008060"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* Stethoscope wrapping neck */}
+                <path
+                  d="M15 15 C13 18 13 22 17 24 C20 25.5 24 24 25 21"
+                  fill="none"
+                  stroke="#0284c7"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                {/* Bubbles / Reactive dots */}
+                <circle cx="17" cy="28" r="1.5" fill="#f43f5e" />
+                <circle cx="23" cy="27" r="1.8" fill="#008060" />
+                <circle cx="19" cy="31" r="1.2" fill="#0284c7" />
+              </svg>
             </div>
-            {!isCollapsed && (
-              <div className="flex flex-col">
-                <span className="font-bold text-lg text-sidebar-foreground tracking-tight leading-none">
-                  City<span className="text-teal-600 dark:text-teal-400">Lab</span>
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider mt-1">
-                  Diagnostics AI
-                </span>
-              </div>
-            )}
+
+            <div className="flex flex-col">
+              <span className="font-extrabold text-xl text-[#0f172a] dark:text-white tracking-tight leading-none">
+                City<span className="text-[#00594C] dark:text-teal-400">Lab</span>
+              </span>
+              <span className="text-[9px] font-bold text-[#f43f5e] tracking-wider uppercase mt-1 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#f43f5e]" />
+                Diagnostic AI Suite
+              </span>
+            </div>
           </div>
 
+          {/* "+ New Analysis" Action Button */}
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex w-8 h-8 rounded-lg items-center justify-center text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors"
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={onOpenUpload}
+            className="w-full mt-5 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#00594C] hover:bg-[#00473c] text-white font-bold text-xs shadow-md shadow-[#00594C]/20 transition-all hover:scale-[1.01]"
           >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            <div className="w-4 h-4 rounded-full border-1.5 border-white flex items-center justify-center">
+              <Plus className="w-3 h-3 stroke-[3]" />
+            </div>
+            <span>New Analysis</span>
           </button>
         </div>
 
         {/* Navigation List */}
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto py-3 px-3 space-y-1 custom-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-            const isUploadAction = item.isAction;
-
-            if (isUploadAction) {
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item)}
-                  className={`w-full flex items-center gap-3.5 px-3 py-3 rounded-xl font-medium text-sm transition-all shadow-sm
-                    bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white my-3
-                    ${isCollapsed ? "justify-center px-0" : "justify-start"}
-                  `}
-                  title={item.label}
-                >
-                  <Icon className="w-5 h-5 shrink-0" />
-                  {!isCollapsed && <span className="truncate font-semibold">{item.label}</span>}
-                </button>
-              );
-            }
 
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item)}
-                className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group relative
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-start
                   ${isActive
-                    ? "bg-teal-500/10 text-teal-700 dark:text-teal-400 font-semibold shadow-xs"
-                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-hover"
+                    ? "bg-[#eef2ff] dark:bg-indigo-950/40 text-[#4f46e5] dark:text-indigo-400 font-bold shadow-2xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
                   }
-                  ${isCollapsed ? "justify-center px-0" : "justify-start"}
                 `}
-                title={item.label}
               >
-                {isActive && (
-                  <span className="absolute start-0 top-2 bottom-2 w-1 bg-teal-600 rounded-e-full" />
+                <div className="flex items-center gap-3">
+                  <Icon
+                    className={`w-4 h-4 shrink-0 transition-colors
+                      ${isActive ? "text-[#4f46e5] dark:text-indigo-400" : "text-muted-foreground"}
+                    `}
+                  />
+                  <span>{item.label}</span>
+                </div>
+
+                {item.isExternal && (
+                  <ExternalLink className="w-3 h-3 opacity-60 shrink-0" />
                 )}
-                <Icon
-                  className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-105
-                    ${isActive ? "text-teal-600 dark:text-teal-400" : "text-muted-foreground group-hover:text-sidebar-foreground"}
-                  `}
-                />
-                {!isCollapsed && <span className="truncate">{item.label}</span>}
               </button>
             );
           })}
         </div>
 
-        {/* Bottom Profile & Privacy Section */}
-        <div className="p-3 border-t border-sidebar-border space-y-2">
-          {/* Privacy Indicator */}
-          <div
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-medium
-              ${isCollapsed ? "justify-center px-0" : ""}
-            `}
-            title="Directive 1 Active: Context Locked to single active patient"
-          >
-            <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600" />
-            {!isCollapsed && <span className="truncate text-[11px]">Context Protected</span>}
+        {/* Bottom Version Indicator */}
+        <div className="p-4 border-t border-border/80 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-semibold text-[11px]">CityLab AI v1.1</span>
           </div>
-
-          {/* User Profile Card */}
-          <div
-            className={`flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-sidebar-hover transition-colors cursor-pointer
-              ${isCollapsed ? "justify-center px-0" : ""}
-            `}
-            onClick={() => setActiveTab("settings")}
-          >
-            <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 font-bold text-xs border border-slate-300 dark:border-slate-600">
-              <User className="w-5 h-5" />
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-semibold text-sidebar-foreground truncate">
-                  Clinical User
-                </span>
-                <span className="text-[10px] text-muted-foreground truncate">
-                  Doctor / Caregiver
-                </span>
-              </div>
-            )}
-          </div>
+          <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-md font-mono">CLIA-Safe</span>
         </div>
       </aside>
     </>
