@@ -1,7 +1,20 @@
 from pathlib import Path
 import os
+import dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env
+env_candidates = [
+    BASE_DIR.parent / ".env",
+    BASE_DIR / ".env",
+    Path.cwd() / ".env",
+    Path.cwd().parent / ".env",
+]
+for env_path in env_candidates:
+    if env_path.exists():
+        dotenv.load_dotenv(dotenv_path=env_path)
+        break
 
 # Discover lab_reports directory
 ENV_LAB_REPORTS = os.getenv("LAB_REPORTS_DIR")

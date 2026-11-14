@@ -1572,14 +1572,14 @@
    ======================================================== */
 .app-shell {
   min-height: 100vh;
-  display: block;
+  display: flex;
   background-color: var(--bg-page);
   color: var(--text-main);
   position: relative;
-  overflow-x: hidden;
 }
 
 .main-viewport {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -3029,66 +3029,57 @@ svg {
    AI Lab Assistant (Floating Drawer & Embedded View)
    ======================================================== */
 .chat-floating-launcher {
-  position: fixed !important;
-  bottom: 1.5rem !important;
-  right: 1.5rem !important;
-  top: auto !important;
-  left: auto !important;
-  width: auto !important;
-  height: auto !important;
-  min-height: unset !important;
-  max-height: 44px !important;
-  z-index: 1000 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-  padding: 0.65rem 1.15rem !important;
-  border-radius: 9999px !important;
-  background-color: #00594C !important;
-  color: #ffffff !important;
-  font-size: 0.85rem !important;
-  font-weight: 700 !important;
-  border: none !important;
-  cursor: pointer !important;
-  box-shadow: 0 4px 16px rgba(0, 89, 76, 0.3) !important;
-  white-space: nowrap !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.35rem;
+  border-radius: 9999px;
+  background-color: #00594C;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 89, 76, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 html[dir="rtl"] .chat-floating-launcher {
-  right: auto !important;
-  left: 1.5rem !important;
+  right: auto;
+  left: 1.5rem;
 }
 
 .chat-floating-launcher:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(0, 89, 76, 0.45) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 89, 76, 0.45);
 }
 
 .chat-floating-card {
-  position: fixed !important;
-  bottom: 1.5rem !important;
-  right: 1.5rem !important;
-  top: auto !important;
-  left: auto !important;
-  z-index: 1000 !important;
-  width: 440px !important;
-  max-width: calc(100vw - 2rem) !important;
-  height: 580px !important;
-  max-height: calc(100vh - 3rem) !important;
-  background-color: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.25) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  animation: chatPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  width: 440px;
+  max-width: calc(100vw - 2rem);
+  height: 580px;
+  max-height: calc(100vh - 3rem);
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: chatPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html[dir="rtl"] .chat-floating-card {
-  right: auto !important;
-  left: 1.5rem !important;
+  right: auto;
+  left: 1.5rem;
 }
 
 html.dark .chat-floating-card {

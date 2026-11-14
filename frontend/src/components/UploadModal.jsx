@@ -70,15 +70,20 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || "Failed to process report file.");
+        let errMsg = `Upload failed with status ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) errMsg = errData.detail;
+        } catch (_) {}
+        throw new Error(errMsg);
       }
 
       const analyzedData = await res.json();
       onUploadSuccess(analyzedData);
       onClose();
     } catch (err) {
-      setError(err.message);
+      console.error("Upload error:", err);
+      setError(err.message || "An unexpected error occurred during report upload.");
     } finally {
       setIsUploading(false);
     }

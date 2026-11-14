@@ -18,14 +18,35 @@ def parse_patient_content(full_content: str, file_name: str) -> PatientReport:
 
     # Extract Patient ID from file_name (e.g. report_P001_Alice_Smith_CBC.md -> P001)
     pid_match = re.search(r"(?:report_)?(P\d{3})", file_name, re.I)
-    patient_id = pid_match.group(1).upper() if pid_match else "P_CUSTOM"
+    if pid_match:
+        patient_id = pid_match.group(1).upper()
+    else:
+        import hashlib
+        short_hash = hashlib.md5(file_name.encode()).hexdigest()[:4].upper()
+        patient_id = f"P_UP_{short_hash}"
 
-    # Demographics regex
-    name_m = re.search(r"\*\s*\*\*Patient Full Name\*\*:\s*(.+)", core, re.I)
-    age_m = re.search(r"\*\s*\*\*(?:Recorded\s+)?Age\*\*:\s*(.+)", core, re.I)
-    sex_m = re.search(r"\*\s*\*\*(?:Biological\s+)?Sex\*\*:\s*(.+)", core, re.I)
-    mrn_m = re.search(r"\*\s*\*\*Medical Record Number \(MRN\)\*\*:\s*(.+)", core, re.I)
-    date_m = re.search(r"\*\s*\*\*Date of Issuance\*\*:\s*(.+)", core, re.I)
+    # Flexible demographics regex matching standard and OCR formats
+    name_m = (
+        re.search(r"\*\s*\*\*Patient Full Name\*\*:\s*(.+)", core, re.I) or
+        re.search(r"(?:Patient\s+(?:Full\s+)?Name|Full\s+Name)\*?\*?[:\s]+\*?\*?\s*([^\n\r*#|]+)", core, re.I) or
+        re.search(r"\bName\*?\*?[:\s]+\*?\*?\s*([^\n\r*#|]+)", core, re.I)
+    )
+    age_m = (
+        re.search(r"\*\s*\*\*(?:Recorded\s+)?Age\*\*:\s*(.+)", core, re.I) or
+        re.search(r"\b(?:Recorded\s+)?Age\*?\*?[:\s]+\*?\*?\s*([^\n\r*#|]+)", core, re.I)
+    )
+    sex_m = (
+        re.search(r"\*\s*\*\*(?:Biological\s+)?Sex\*\*:\s*(.+)", core, re.I) or
+        re.search(r"\b(?:Biological\s+)?Sex\*?\*?[:\s]+\*?\*?\s*([^\n\r*#|]+)", core, re.I)
+    )
+    mrn_m = (
+        re.search(r"\*\s*\*\*Medical Record Number \(MRN\)\*\*:\s*(.+)", core, re.I) or
+        re.search(r"\bMRN\*?\*?[:\s]+\*?\*?\s*([A-Za-z0-9\-]+)", core, re.I)
+    )
+    date_m = (
+        re.search(r"\*\s*\*\*Date of Issuance\*\*:\s*(.+)", core, re.I) or
+        re.search(r"\b(?:Date of Issuance|Date)\*?\*?[:\s]+\*?\*?\s*([0-9\-\/]{4,12})", core, re.I)
+    )
 
     patient_name = name_m.group(1).strip() if name_m else "Custom Uploaded Patient"
     raw_age = age_m.group(1).strip() if age_m else ""
@@ -66,20 +87,26 @@ def parse_patient_content(full_content: str, file_name: str) -> PatientReport:
 
     raw_results: List[RawTestResult] = []
 
-    # Format A: Markdown tables (| Test Name | Result | Unit |)
-    table_rows = re.findall(r"\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|", sec3)
+    # Format A: Markdown tables (robust line-by-line split)
     found_table = False
-    if table_rows:
-        for r in table_rows:
-            col0 = r[0].strip("*_ ")
-            col1 = r[1].strip("*_ ")
-            col2 = r[2].strip("*_ ")
-            if "---" in col0 or col0.lower() in ["test", "test name", "analyte"]:
-                continue
-            if col1.lower() in ["result", "value"]:
-                continue
-            raw_results.append(RawTestResult(test_name=col0, raw_value=col1, unit=col2 or None))
-            found_table = True
+    for line in sec3.splitlines():
+        if "|" in line:
+            parts = [p.strip("*_ ") for p in line.split("|") if p.strip()]
+            if len(parts) >= 2:
+                col0 = parts[0]
+                col1 = parts[1]
+                col2 = parts[2] if len(parts) >= 3 else None
+                if "---" in col0 or col0.lower() in ["test", "test name", "analyte"]:
+                    continue
+                if col1.lower() in ["result", "value", "reported value"]:
+                    continue
+                # If col2 is empty or looks like a reference range, split col1 if it has value + unit
+                v_tokens = col1.split()
+                if len(v_tokens) > 1 and (not col2 or "-" in col2):
+                    raw_results.append(RawTestResult(test_name=col0, raw_value=v_tokens[0], unit=" ".join(v_tokens[1:])))
+                else:
+                    raw_results.append(RawTestResult(test_name=col0, raw_value=col1, unit=col2 or None))
+                found_table = True
 
     if not found_table:
         # Format B: Key-values across multiple lines (Test Conducted / Value Recorded)
