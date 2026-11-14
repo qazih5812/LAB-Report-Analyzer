@@ -54,15 +54,33 @@ def on_startup():
 
 app.include_router(router)
 
-@app.get("/")
-def root():
-    return {
-        "message": "CityLab Diagnostics Medical Lab Report Explainer API is online.",
-        "documentation": "/docs",
-        "health": "/api/health",
-        "reports": "/api/reports"
-    }
+# Check for production frontend static build
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+import os
+
+static_dir_1 = Path(__file__).resolve().parent / "static"
+static_dir_2 = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+static_path = None
+if static_dir_1.exists() and (static_dir_1 / "index.html").exists():
+    static_path = static_dir_1
+elif static_dir_2.exists() and (static_dir_2 / "index.html").exists():
+    static_path = static_dir_2
+
+if static_path:
+    app.mount("/", StaticFiles(directory=str(static_path), html=True), name="static")
+else:
+    @app.get("/")
+    def root():
+        return {
+            "message": "CityLab Diagnostics Medical Lab Report Explainer API is online.",
+            "documentation": "/docs",
+            "health": "/api/health",
+            "reports": "/api/reports"
+        }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=False)

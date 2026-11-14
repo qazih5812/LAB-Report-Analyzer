@@ -15,6 +15,7 @@ from app.schemas import (
     TrendPoint,
 )
 from app.core.parser import load_all_reports, parse_patient_file, parse_patient_content
+from app.core.ingest import process_uploaded_file
 from app.core.classifier import classify_test_result
 from app.core.summary import MANDATORY_DISCLAIMER
 from app.services.llm_provider import llm_manager
@@ -132,9 +133,9 @@ def upload_custom_report(file: UploadFile = File(...)):
     cache = get_reports_cache()
     try:
         raw_bytes = file.file.read()
-        content = raw_bytes.decode("utf-8")
+        content = process_uploaded_file(raw_bytes, file.filename or "custom_report.md")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
     report = parse_patient_content(content, file.filename or "custom_report.md")
     cache[report.patient_id.upper()] = report

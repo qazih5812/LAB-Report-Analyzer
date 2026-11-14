@@ -1615,6 +1615,21 @@ html[dir="rtl"] .main-viewport.sidebar-collapsed {
   }
 }
 
+@media (max-width: 640px) {
+  .view-content-container {
+    padding: 1rem 0.75rem;
+  }
+  .modal-card {
+    width: 96% !important;
+    max-width: 96% !important;
+    padding: 1.25rem 1rem !important;
+    margin: 1rem auto !important;
+  }
+  .dropzone {
+    padding: 1.5rem 1rem !important;
+  }
+}
+
 .view-content-container {
   flex: 1;
   padding: 1.5rem;

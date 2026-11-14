@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
-import { apiUrl } from '../api';
-import { Upload, X, FileText, AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState } from "react";
+import { apiUrl } from "../api";
+import {
+  Upload,
+  X,
+  FileText,
+  AlertCircle,
+  RefreshCw,
+  FileSpreadsheet,
+  Image as ImageIcon,
+} from "lucide-react";
 
 export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -13,9 +22,9 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   };
@@ -25,13 +34,24 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
+      handleFileSelected(e.dataTransfer.files[0]);
     }
   };
 
   const handleChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      handleFileSelected(e.target.files[0]);
+    }
+  };
+
+  const handleFileSelected = (selectedFile) => {
+    setFile(selectedFile);
+    setError(null);
+    if (selectedFile.type.startsWith("image/")) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
     }
   };
 
@@ -41,17 +61,17 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
     setError(null);
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
-      const res = await fetch(apiUrl('/api/upload'), {
-        method: 'POST',
+      const res = await fetch(apiUrl("/api/upload"), {
+        method: "POST",
         body: formData,
       });
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.detail || 'Failed to process report file.');
+        throw new Error(errData.detail || "Failed to process report file.");
       }
 
       const analyzedData = await res.json();
@@ -64,13 +84,16 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
     }
   };
 
+  const isPdf = file?.name?.toLowerCase().endsWith(".pdf");
+  const isImage = file?.type?.startsWith("image/") || /\.(png|jpe?g|webp|bmp)$/i.test(file?.name || "");
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title-row">
             <Upload size={20} className="modal-title-icon" />
-            <h3>Upload Custom Medical Report</h3>
+            <h3>Upload Medical Lab Report</h3>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
             <X size={18} />
@@ -79,13 +102,12 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
 
         <div className="modal-body">
           <p className="modal-desc">
-            Upload an authentic or simulated CityLab markdown report (<code>.md</code>).
-            The ingestion engine will strip CLIA/HIPAA boilerplate, extract demographics,
-            normalize aliases, and execute deterministic classification.
+            Upload a laboratory report in <strong>PDF</strong>, <strong>PNG/JPG Image</strong>, or <strong>Markdown (.md)</strong> format.
+            Our multimodal ingestion pipeline extracts patient demographics and runs deterministic classification.
           </p>
 
           <div
-            className={`dropzone ${dragActive ? 'drag-active' : ''} ${file ? 'has-file' : ''}`}
+            className={`dropzone ${dragActive ? "drag-active" : ""} ${file ? "has-file" : ""}`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -94,22 +116,39 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
             <input
               type="file"
               id="file-input"
-              accept=".md,.txt"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.md,.txt"
               onChange={handleChange}
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
             />
             <label htmlFor="file-input" className="dropzone-label">
-              <FileText size={36} className="dropzone-icon" />
-              {file ? (
+              {previewUrl ? (
+                <div className="flex flex-col items-center gap-2">
+                  <img
+                    src={previewUrl}
+                    alt="Upload Preview"
+                    className="max-h-36 max-w-full rounded-lg border border-border object-contain shadow-xs"
+                  />
+                  <span className="text-xs font-semibold text-foreground">{file.name}</span>
+                </div>
+              ) : isPdf ? (
+                <div className="flex flex-col items-center gap-1.5">
+                  <FileSpreadsheet size={40} className="text-red-500" />
+                  <span className="text-xs font-bold text-foreground">{file.name}</span>
+                  <span className="text-[11px] text-muted-foreground">PDF Document Ready for Ingestion</span>
+                </div>
+              ) : file ? (
                 <div className="file-selected-info">
                   <strong>Selected:</strong> {file.name} ({(file.size / 1024).toFixed(1)} KB)
                 </div>
               ) : (
                 <>
+                  <FileText size={36} className="dropzone-icon" />
                   <span className="dropzone-text-main">
-                    Drag and drop your lab report file here, or <strong>browse</strong>
+                    Drag and drop your report here, or <strong>browse</strong>
                   </span>
-                  <span className="dropzone-text-sub">Supports Markdown (.md) reports</span>
+                  <span className="dropzone-text-sub">
+                    Supports <strong>PDF</strong>, <strong>PNG</strong>, <strong>JPG</strong>, and <strong>Markdown</strong> files
+                  </span>
                 </>
               )}
             </label>
@@ -117,8 +156,8 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
 
           {error && (
             <div className="modal-error">
-              <AlertCircle size={16} />
-              <span>{error}</span>
+              <AlertCircle size={16} className="shrink-0" />
+              <span className="text-xs">{error}</span>
             </div>
           )}
         </div>
@@ -135,7 +174,7 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
             {isUploading ? (
               <>
                 <RefreshCw size={14} className="spinning" />
-                <span>Processing Report...</span>
+                <span>Extracting & Analyzing...</span>
               </>
             ) : (
               <span>Analyze Report</span>

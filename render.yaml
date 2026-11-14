@@ -1,29 +1,22 @@
+# ==============================================================================
+# Render.com Blueprint Specification for CityLab Diagnostics
+# Deploy via: Render Dashboard -> Blueprints -> New Blueprint Instance
+# ==============================================================================
+
 services:
-  # FastAPI Backend
   - type: web
-    name: citylab-backend
-    env: python
-    buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    name: citylab-report-explainer
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.10.11
+      - key: PORT
+        value: 10000
       - key: GEMINI_API_KEY
         sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
-
-  # React Static Frontend
-  - type: web
-    name: citylab-frontend
-    env: static
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: citylab-backend
-          property: host
