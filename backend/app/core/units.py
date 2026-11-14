@@ -31,11 +31,13 @@ def normalize_unit_and_value(
     """
     target_unit = STANDARD_UNITS.get(canonical_test)
     
-    # Try converting raw value to float
+    # Try converting raw value to float (handling commas such as "150,000")
+    val: Optional[float] = None
     try:
-        val = float(reported_value_str)
+        clean_num_str = str(reported_value_str).replace(",", "").strip()
+        val = float(clean_num_str)
     except (ValueError, TypeError):
-        # Non-numeric result (e.g. "Negative")
+        # Non-numeric result (e.g. "Negative", "Pending", "Corrupted")
         return None, reported_unit, False, None, True
 
     norm_rep_unit = reported_unit.strip().lower() if reported_unit else ""

@@ -5,13 +5,17 @@ from typing import Tuple, List, Optional
 INJECTION_PATTERNS = [
     r"ignore\s+(all\s+)?(previous\s+|prior\s+|above\s+)?(instructions|prompts|rules|guidelines)",
     r"disregard\s+(all\s+)?(previous\s+|prior\s+|system\s+)?(instructions|rules|guidelines)",
+    r"forget\s+(all\s+)?(previous\s+|prior\s+)?instructions",
     r"you\s+are\s+now\s+(a\s+doctor|unrestricted|dan|in\s+developer\s+mode)",
+    r"pretend\s+you\s+are\s+(a\s+doctor|a\s+physician|unrestricted)",
     r"bypass\s+(safety|privacy|rules|filters)",
     r"(reveal|print|show)\s+(system\s+prompt|hidden\s+instructions|secret\s+key)",
     r"act\s+as\s+(an\s+unconstrained|a\s+diagnosing|a\s+licensed\s+physician)",
     r"give\s+me\s+a\s+formal\s+medical\s+diagnosis",
     r"override\s+system\s+directive",
     r"disable\s+privacy\s+mode",
+    r"jailbreak",
+    r"admin\s+mode",
 ]
 
 # Prohibited diagnostic phrases in generated output (Directive 2: No Diagnostic Authority)

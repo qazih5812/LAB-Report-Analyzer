@@ -36,7 +36,10 @@ def validate_privacy_context(
     generic_probes = [
         "another patient", "other patient", "someone else",
         "previous patient", "next patient", "all patients",
-        "other people", "other reports"
+        "other people", "other reports", "different patient",
+        "everyone else", "other users", "patient list",
+        "list of patients", "all medical records", "other records",
+        "every patient", "anyone else", "dump the database"
     ]
     for probe in generic_probes:
         if probe in clean_query:

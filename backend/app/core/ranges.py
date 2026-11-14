@@ -178,13 +178,21 @@ def get_reference_interval(
 
     # Sex check for sex-dependent analytes
     if canonical_test in SEX_SPECIFIC_ANALYTES:
-        if not sex or sex not in ["Male", "Female"]:
+        clean_sex: Optional[str] = None
+        if sex:
+            s_up = sex.strip().upper()
+            if s_up.startswith("M"):
+                clean_sex = "Male"
+            elif s_up.startswith("F"):
+                clean_sex = "Female"
+
+        if not clean_sex:
             return None, f"Biological sex is missing or not provided. Normal range for {canonical_test} differs between males and females."
 
         for r in matching_analytes:
-            if r.sex == sex and r.age_min <= age <= r.age_max:
+            if r.sex == clean_sex and r.age_min <= age <= r.age_max:
                 return r, "Matched sex-specific reference interval"
-        return None, f"No reference interval found for sex={sex}, age={age}"
+        return None, f"No reference interval found for sex={clean_sex}, age={age}"
 
     # Non-sex-specific analytes
     for r in matching_analytes:

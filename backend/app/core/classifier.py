@@ -69,7 +69,10 @@ def classify_test_result(
             status_reason=conv_note or "Incompatible unit of measurement (cannot be classified from the files)."
         )
 
-    # 3. Reference range lookup (checking age and sex)
+    # 3. Check urgent / critical thresholds first (safety: critical values must never be hidden)
+    is_urgent, urgent_status, urgent_desc = check_urgent_threshold(canonical_name, norm_val)
+
+    # 4. Reference range lookup (checking age and sex)
     interval, range_reason = get_reference_interval(canonical_name, age, sex)
 
     if not interval:
@@ -85,15 +88,13 @@ def classify_test_result(
             applicable_min=None,
             applicable_max=None,
             expected_range_display="N/A",
-            status="CANNOT_BE_CLASSIFIED",
-            is_urgent=False,
+            status=urgent_status if is_urgent else "CANNOT_BE_CLASSIFIED",
+            is_urgent=is_urgent,
+            urgent_trigger=urgent_desc if is_urgent else None,
             is_boundary_value=False,
             source_file="1_lab_safety_rules.md",
-            status_reason=range_reason
+            status_reason=f"{urgent_desc} (Note: {range_reason})" if is_urgent else range_reason
         )
-
-    # 4. Check urgent / critical thresholds (cannot be downgraded)
-    is_urgent, urgent_status, urgent_desc = check_urgent_threshold(canonical_name, norm_val)
 
     # 5. Handle qualitative / categorical test (e.g. Urine Protein)
     if interval.expected_categorical is not None:
@@ -134,10 +135,31 @@ def classify_test_result(
     range_display = f"{min_norm} - {max_norm} {interval.unit or ''}".strip()
     is_boundary = False
 
+    # Check for unparseable / missing numeric value on numeric test
+    if val is None:
+        return ClassifiedTestResult(
+            reported_test=raw_result.test_name,
+            canonical_test=canonical_name,
+            reported_value=raw_result.raw_value,
+            reported_unit=raw_result.unit,
+            converted_value=None,
+            converted_unit=None,
+            conversion_applied=False,
+            conversion_note=None,
+            applicable_min=min_norm,
+            applicable_max=max_norm,
+            expected_range_display=range_display,
+            status="CANNOT_BE_CLASSIFIED",
+            is_urgent=False,
+            is_boundary_value=False,
+            source_file=interval.source_file,
+            status_reason=f"Reported value '{raw_result.raw_value}' is non-numeric and cannot be evaluated against reference interval [{range_display}]."
+        )
+
     # Check exact boundary edge-case rule:
     # "If a patient's analytical value sits exactly on a lower or upper range limit,
     # the algorithmic classification MUST mark it as NORMAL."
-    if val is not None and (val == min_norm or val == max_norm):
+    if not is_urgent and (val == min_norm or val == max_norm):
         is_boundary = True
         status = "NORMAL"
         which_limit = "lower" if val == min_norm else "upper"
@@ -145,14 +167,14 @@ def classify_test_result(
             f"Value ({val}) sits exactly on the {which_limit} normal limit ({val}). "
             f"Classified as NORMAL per laboratory edge-case rule ({interval.source_file})."
         )
-    elif val is not None and min_norm is not None and val < min_norm:
+    elif min_norm is not None and val < min_norm:
         if is_urgent and urgent_status == "URGENT_LOW":
             status = "URGENT_LOW"
             reason = urgent_desc or "Critical low value."
         else:
             status = "LOW"
             reason = f"Value ({val}) is below normal lower limit ({min_norm})."
-    elif val is not None and max_norm is not None and val > max_norm:
+    elif max_norm is not None and val > max_norm:
         if is_urgent and urgent_status == "URGENT_HIGH":
             status = "URGENT_HIGH"
             reason = urgent_desc or "Critical high value."

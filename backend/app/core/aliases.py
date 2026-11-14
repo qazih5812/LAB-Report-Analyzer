@@ -15,15 +15,22 @@ ALIAS_MAP: Dict[str, Tuple[str, str]] = {
     "fbs": ("Fasting Blood Sugar", "2_medical_glossary.md: FBS is the exact equivalent of Fasting Blood Sugar"),
     "fasting blood sugar": ("Fasting Blood Sugar", "5_ranges_biochemistry.md: Fasting Blood Sugar"),
     "glucose": ("Fasting Blood Sugar", "2_medical_glossary.md / 5_ranges_biochemistry.md"),
+    "blood glucose": ("Fasting Blood Sugar", "Clinical alias for Fasting Blood Sugar"),
+    "fasting glucose": ("Fasting Blood Sugar", "Clinical alias for Fasting Blood Sugar"),
+    "blood sugar": ("Fasting Blood Sugar", "Clinical alias for Fasting Blood Sugar"),
     
     "hb": ("Hemoglobin", "2_medical_glossary.md: Hb maps to Hemoglobin"),
+    "hgb": ("Hemoglobin", "Standard clinical abbreviation for Hemoglobin"),
     "hemoglobin": ("Hemoglobin", "4_ranges_hematology.md: Hemoglobin (Hb)"),
     
     "plt": ("Platelet Count", "2_medical_glossary.md: PLT maps to Platelet Count"),
     "platelet count": ("Platelet Count", "4_ranges_hematology.md: Platelet Count (PLT)"),
     "platelets": ("Platelet Count", "2_medical_glossary.md"),
+    "platelet": ("Platelet Count", "Clinical alias for Platelet Count"),
     
     "wbc": ("White Blood Cell Count", "2_medical_glossary.md: WBC maps to White Blood Cell Count"),
+    "wbc count": ("White Blood Cell Count", "Clinical alias for White Blood Cell Count"),
+    "white blood cells": ("White Blood Cell Count", "Clinical alias for White Blood Cell Count"),
     "white blood cell count": ("White Blood Cell Count", "4_ranges_hematology.md: White Blood Cell Count (WBC)"),
     
     "rbc": ("Red Blood Cell Count", "2_medical_glossary.md: RBC maps to Red Blood Cell Count"),
@@ -42,6 +49,7 @@ ALIAS_MAP: Dict[str, Tuple[str, str]] = {
     
     # Other analytes in ranges
     "cholesterol": ("Cholesterol", "5_ranges_biochemistry.md: Cholesterol"),
+    "total cholesterol": ("Cholesterol", "Clinical alias for Total Cholesterol"),
     
     # Unknown tests (in corpus)
     "serum ferritin": ("Serum Ferritin", "report_P006_Fiona_UnknownTest.md (Not present in range sheets)"),
