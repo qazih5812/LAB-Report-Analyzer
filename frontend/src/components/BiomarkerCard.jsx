@@ -108,10 +108,10 @@ export default function BiomarkerCard({ result }) {
   };
 
   const gaugePercent = computeGaugePercent();
-  const hasAlias = reported_test.toLowerCase() !== canonical_test.toLowerCase();
+  const hasAlias = (reported_test || '').toLowerCase() !== (canonical_test || '').toLowerCase();
 
   return (
-    <div className={`biomarker-card ${status.toLowerCase()}`}>
+    <div className={`biomarker-card ${(status || 'cannot_be_classified').toLowerCase()}`}>
       {/* Top Header */}
       <div className="biomarker-card-header">
         <div>

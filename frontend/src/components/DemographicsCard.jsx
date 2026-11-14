@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, AlertCircle, RefreshCw, Check } from 'lucide-react';
 
 export default function DemographicsCard({ analysis, onApplyOverride, onResetOverride }) {
-  const { patient_name, mrn, demographics, demographics_missing, demographics_prompt } = analysis;
+  const { patient_id, patient_name, mrn, demographics, demographics_missing, demographics_prompt } = analysis;
 
   const [inputAge, setInputAge] = useState(
     demographics?.age !== null && demographics?.age !== undefined ? demographics.age : ''

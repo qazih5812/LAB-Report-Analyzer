@@ -16,6 +16,36 @@ import {
 } from 'lucide-react';
 import './App.css';
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("Dashboard error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ margin: '2rem', padding: '1.5rem', background: '#fee2e2', color: '#991b1b', borderRadius: '12px', border: '1px solid #f87171' }}>
+          <h3>⚠️ A rendering issue occurred:</h3>
+          <p style={{ marginTop: '0.5rem', fontFamily: 'monospace' }}>{this.state.error?.message || String(this.state.error)}</p>
+          <button
+            style={{ marginTop: '1rem', padding: '8px 16px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => window.location.reload()}
+          >
+            Reload Dashboard
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [reports, setReports] = useState([]);
   const [selectedId, setSelectedId] = useState('P001');
@@ -164,75 +194,77 @@ export default function App() {
 
         {/* Center Main Stage: Analysis Dashboard */}
         <main className="dashboard-content">
-          {error && (
-            <div className="error-banner">
-              <AlertCircle size={20} />
-              <span>{error}</span>
-            </div>
-          )}
+          <ErrorBoundary>
+            {error && (
+              <div className="error-banner">
+                <AlertCircle size={20} />
+                <span>{error}</span>
+              </div>
+            )}
 
-          {isLoading && !analysis ? (
-            <div className="loading-state">
-              <RefreshCw size={36} className="spinning text-primary" />
-              <h3>Analyzing Clinical Report...</h3>
-              <p>Executing deterministic classifications, boundary tests, and unit normalization.</p>
-            </div>
-          ) : analysis ? (
-            <>
-              {/* Priority 5: Urgent Threshold Warning Banner */}
-              {analysis.has_urgent_values && (
-                <UrgentAlertBanner
-                  warningText={analysis.urgent_warning}
-                  onScrollToDoctorQuestions={handleScrollToQuestions}
+            {isLoading && !analysis ? (
+              <div className="loading-state">
+                <RefreshCw size={36} className="spinning text-primary" />
+                <h3>Analyzing Clinical Report...</h3>
+                <p>Executing deterministic classifications, boundary tests, and unit normalization.</p>
+              </div>
+            ) : analysis ? (
+              <>
+                {/* Priority 5: Urgent Threshold Warning Banner */}
+                {analysis.has_urgent_values && (
+                  <UrgentAlertBanner
+                    warningText={analysis.urgent_warning}
+                    onScrollToDoctorQuestions={handleScrollToQuestions}
+                  />
+                )}
+
+                {/* Priority 3: Demographics & Missing Demographics Interactive Resolver */}
+                <DemographicsCard
+                  key={`${analysis.patient_id}-${analysis.demographics?.age}-${analysis.demographics?.sex}`}
+                  analysis={analysis}
+                  onApplyOverride={handleApplyOverride}
+                  onResetOverride={handleResetOverride}
                 />
-              )}
 
-              {/* Priority 3: Demographics & Missing Demographics Interactive Resolver */}
-              <DemographicsCard
-                key={`${analysis.patient_id}-${analysis.demographics?.age}-${analysis.demographics?.sex}`}
-                analysis={analysis}
-                onApplyOverride={handleApplyOverride}
-                onResetOverride={handleResetOverride}
-              />
-
-              {/* Priority 3: Executive Summary (Class 8 Layman's Terms) */}
-              <section className="summary-section">
-                <div className="summary-header">
-                  <div className="summary-title-row">
-                    <Sparkles size={20} className="summary-icon" />
-                    <h3>Layman Summary (Class 8 Reading Level)</h3>
+                {/* Priority 3: Executive Summary (Class 8 Layman's Terms) */}
+                <section className="summary-section">
+                  <div className="summary-header">
+                    <div className="summary-title-row">
+                      <Sparkles size={20} className="summary-icon" />
+                      <h3>Layman Summary (Class 8 Reading Level)</h3>
+                    </div>
+                    <span className="summary-provider-pill">
+                      Verified by: {analysis.provider_used.toUpperCase()}
+                    </span>
                   </div>
-                  <span className="summary-provider-pill">
-                    Verified by: {analysis.provider_used.toUpperCase()}
-                  </span>
-                </div>
-                <div className="summary-body">
-                  <p className="summary-prose">{analysis.layman_summary}</p>
-                </div>
-              </section>
+                  <div className="summary-body">
+                    <p className="summary-prose">{analysis.layman_summary}</p>
+                  </div>
+                </section>
 
-              {/* Priority 4, 5, 6: Biomarker Result Cards Grid */}
-              <section className="biomarkers-section">
-                <div className="section-title-row">
-                  <Layers size={20} className="section-icon" />
-                  <h3>Biomarker Results ({analysis.results.length})</h3>
-                </div>
+                {/* Priority 4, 5, 6: Biomarker Result Cards Grid */}
+                <section className="biomarkers-section">
+                  <div className="section-title-row">
+                    <Layers size={20} className="section-icon" />
+                    <h3>Biomarker Results ({analysis.results.length})</h3>
+                  </div>
 
-                <div className="biomarkers-grid">
-                  {analysis.results.map((res, idx) => (
-                    <BiomarkerCard key={idx} result={res} />
-                  ))}
-                </div>
-              </section>
+                  <div className="biomarkers-grid">
+                    {analysis.results.map((res, idx) => (
+                      <BiomarkerCard key={idx} result={res} />
+                    ))}
+                  </div>
+                </section>
 
-              {/* Priority 8: Doctor Consultation Questions */}
-              <DoctorQuestions
-                questions={analysis.doctor_questions}
-                disclaimer={analysis.disclaimer}
-                hasUrgent={analysis.has_urgent_values}
-              />
-            </>
-          ) : null}
+                {/* Priority 8: Doctor Consultation Questions */}
+                <DoctorQuestions
+                  questions={analysis.doctor_questions}
+                  disclaimer={analysis.disclaimer}
+                  hasUrgent={analysis.has_urgent_values}
+                />
+              </>
+            ) : null}
+          </ErrorBoundary>
         </main>
       </div>
 
