@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 
@@ -12,7 +12,7 @@ from app.schemas import (
     ChatResponse,
     ClassifiedTestResult,
 )
-from app.core.parser import load_all_reports, parse_patient_file
+from app.core.parser import load_all_reports, parse_patient_file, parse_patient_content
 from app.core.classifier import classify_test_result
 from app.core.summary import MANDATORY_DISCLAIMER
 from app.services.llm_provider import llm_manager
@@ -76,6 +76,22 @@ def get_report(patient_id: str):
     if pid not in cache:
         raise HTTPException(status_code=404, detail=f"Patient report '{patient_id}' not found.")
     return cache[pid]
+
+@router.post("/upload", response_model=AnalysisResponse)
+def upload_custom_report(file: UploadFile = File(...)):
+    cache = get_reports_cache()
+    try:
+        raw_bytes = file.file.read()
+        content = raw_bytes.decode("utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {e}")
+
+    report = parse_patient_content(content, file.filename or "custom_report.md")
+    cache[report.patient_id.upper()] = report
+
+    # Perform immediate deterministic classification & analysis
+    req = AnalysisRequest(patient_id=report.patient_id)
+    return analyze_report(req)
 
 @router.post("/analyze", response_model=AnalysisResponse)
 def analyze_report(request: AnalysisRequest):

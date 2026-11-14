@@ -93,3 +93,23 @@ def test_chat_privacy_enforcement():
     res_valid = patient_chat(req_valid)
     assert res_valid.allowed is True
     assert "Alice Smith" in res_valid.response
+
+def test_upload_report_endpoint():
+    import io
+    from fastapi import UploadFile
+    from app.api.routes import upload_custom_report
+
+    content = b"""## SECTION I: PATIENT DEMOGRAPHICS
+* **Patient Full Name**: Custom Uploader
+* **Medical Record Number (MRN)**: CLD-TEST-123
+* **Age**: 32
+* **Biological Sex**: Female
+
+## SECTION III: TEST RESULTS
+* Hemoglobin: 13.0 g/dL
+"""
+    upload_file = UploadFile(filename="report_P999_Custom_Uploader.md", file=io.BytesIO(content))
+    res = upload_custom_report(upload_file)
+    assert res.patient_name == "Custom Uploader"
+    assert res.demographics["age"] == 32
+    assert res.results[0].status == "NORMAL"
