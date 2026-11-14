@@ -195,35 +195,29 @@ export default function ChatAssistant({
   if (!isEmbedded && !isOpen) {
     return (
       <button
-        className="fixed bottom-6 end-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm shadow-xl shadow-teal-600/30 transition-transform hover:scale-105"
+        className="chat-floating-launcher"
         onClick={onToggle}
         title="Open AI Lab Assistant"
       >
-        <MessageSquare className="w-5 h-5" />
-        <span className="font-semibold">{t.title}</span>
+        <MessageSquare size={18} />
+        <span>{t.title}</span>
       </button>
     );
   }
 
   return (
-    <div
-      className={
-        isEmbedded
-          ? "w-full max-w-4xl mx-auto flex flex-col bg-card rounded-2xl border border-border shadow-sm overflow-hidden h-[calc(100vh-140px)]"
-          : "fixed bottom-6 end-6 z-50 w-full max-w-md sm:w-96 flex flex-col bg-card rounded-2xl border border-border shadow-2xl overflow-hidden h-[540px] animate-in fade-in zoom-in-95 duration-200"
-      }
-    >
+    <div className={isEmbedded ? "chat-embedded-card" : "chat-floating-card"}>
       {/* Header */}
-      <div className="h-14 bg-gradient-to-r from-teal-700 to-teal-600 px-4 flex items-center justify-between text-white shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
+      <div className="chat-modal-header">
+        <div className="chat-header-title-wrap">
+          <div className="chat-header-sparkle-box">
+            <Sparkles size={16} />
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-bold truncate leading-none">{t.title}</span>
-            <div className="flex items-center gap-1 text-[11px] text-teal-100 mt-1 truncate">
-              <ShieldCheck className="w-3 h-3 shrink-0" />
-              <span className="truncate">Locked: {activePatient?.patient_name || "Context Safe"}</span>
+          <div className="chat-header-text-group">
+            <span className="chat-header-main-title">{t.title}</span>
+            <div className="chat-header-locked-tag">
+              <ShieldCheck size={12} />
+              <span>Locked: {activePatient?.patient_name || "Context Safe"}</span>
             </div>
           </div>
         </div>
@@ -231,21 +225,22 @@ export default function ChatAssistant({
         {!isEmbedded && onToggle && (
           <button
             onClick={onToggle}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-teal-100 hover:text-white hover:bg-white/10 transition-colors"
+            className="chat-close-btn"
+            title="Close Assistant"
           >
-            <X className="w-4 h-4" />
+            <X size={16} />
           </button>
         )}
       </div>
 
       {/* Suggested Questions Horizontal Scroller */}
-      <div className="px-3 py-2 bg-secondary/50 border-b border-border flex items-center gap-1.5 overflow-x-auto custom-scrollbar shrink-0">
+      <div className="chat-suggested-scroller">
         {suggestedQuestions.map((q, idx) => (
           <button
             key={idx}
             onClick={() => handleSend(q)}
             disabled={isLoading}
-            className="px-2.5 py-1 rounded-full bg-card hover:bg-teal-500/10 hover:text-teal-700 dark:hover:text-teal-400 text-[11px] font-medium text-muted-foreground border border-border/70 shrink-0 transition-colors text-start whitespace-nowrap"
+            className="chat-suggested-pill"
           >
             {q}
           </button>
@@ -254,14 +249,14 @@ export default function ChatAssistant({
 
       {/* Speech Error Banner */}
       {speechError && (
-        <div className="px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs flex items-center justify-between">
+        <div className="chat-speech-error">
           <span>{speechError}</span>
-          <button onClick={() => setSpeechError(null)} className="text-xs font-bold px-1">✕</button>
+          <button onClick={() => setSpeechError(null)} className="error-close-btn">✕</button>
         </div>
       )}
 
       {/* Message Stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar bg-background/50">
+      <div className="chat-message-stream">
         {messages.map((m, idx) => {
           const isUser = m.sender === "user";
           const isRefused = !m.allowed && !isUser;
@@ -270,57 +265,56 @@ export default function ChatAssistant({
           return (
             <div
               key={idx}
-              className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}
+              className={`chat-msg-row ${isUser ? "user" : "assistant"}`}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-xs relative group
-                  ${isUser
-                    ? "bg-teal-600 text-white rounded-ee-xs"
+                className={`chat-bubble ${
+                  isUser
+                    ? "bubble-user"
                     : isRefused
-                    ? "bg-rose-500/10 text-rose-900 dark:text-rose-200 border border-rose-500/30 rounded-es-xs"
+                    ? "bubble-refused"
                     : m.isEmergency
-                    ? "bg-red-500/15 text-red-900 dark:text-red-200 border-2 border-red-500 rounded-es-xs font-medium"
-                    : "bg-card text-card-foreground border border-border/80 rounded-es-xs"
-                  }
-                `}
+                    ? "bubble-emergency"
+                    : "bubble-assistant"
+                }`}
               >
                 {/* Emergency Alert Tag */}
                 {m.isEmergency && (
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 mb-2 pb-1 border-b border-red-500/30">
-                    <AlertTriangle className="w-4 h-4" />
+                  <div className="bubble-tag-emergency">
+                    <AlertTriangle size={14} />
                     <span>EMERGENCY CLINICAL NOTICE</span>
                   </div>
                 )}
 
                 {/* Privacy Refusal Tag */}
                 {isRefused && (
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 mb-1.5">
-                    <ShieldAlert className="w-4 h-4" />
+                  <div className="bubble-tag-refusal">
+                    <ShieldAlert size={14} />
                     <span>Privacy Refusal (Safety Directive 1)</span>
                   </div>
                 )}
 
                 {/* Message Body */}
-                <div className="whitespace-pre-wrap">{m.text}</div>
+                <div className="bubble-text">{m.text}</div>
 
                 {/* Citations Box */}
                 {!isUser && m.citations && m.citations.length > 0 && (
-                  <div className="mt-3 pt-2.5 border-t border-border/60 space-y-1.5">
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      <BookOpen className="w-3 h-3 text-teal-600" />
+                  <div className="bubble-citations">
+                    <div className="citations-header">
+                      <BookOpen size={12} />
                       <span>{t.trustedCitations}</span>
                     </div>
-                    <div className="space-y-1">
+                    <div className="citations-list">
                       {m.citations.map((c, cIdx) => (
                         <a
                           key={cIdx}
                           href={c.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-secondary/70 hover:bg-teal-500/10 text-[11px] text-teal-700 dark:text-teal-400 transition-colors"
+                          className="citation-link"
                         >
                           <span className="truncate">{c.source}</span>
-                          <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                          <ExternalLink size={10} />
                         </a>
                       ))}
                     </div>
@@ -329,23 +323,21 @@ export default function ChatAssistant({
 
                 {/* Footer Controls: Text-to-Speech + Engine Tag */}
                 {!isUser && (
-                  <div className="mt-2.5 pt-1.5 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/40">
+                  <div className="bubble-footer">
                     <span>Engine: {m.provider || "deterministic"}</span>
                     <button
                       onClick={() => handleToggleSpeech(idx, m.text)}
-                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-secondary transition-colors
-                        ${isSpeakingThis ? "text-teal-600 font-bold" : "text-muted-foreground"}
-                      `}
+                      className={`bubble-voice-btn ${isSpeakingThis ? "speaking" : ""}`}
                       title={isSpeakingThis ? "Stop audio reading" : "Read message aloud"}
                     >
                       {isSpeakingThis ? (
                         <>
-                          <VolumeX className="w-3 h-3" />
+                          <VolumeX size={12} />
                           <span>Stop</span>
                         </>
                       ) : (
                         <>
-                          <Volume2 className="w-3 h-3" />
+                          <Volume2 size={12} />
                           <span>Listen</span>
                         </>
                       )}
@@ -358,8 +350,8 @@ export default function ChatAssistant({
         })}
 
         {isLoading && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card/60 p-2.5 rounded-xl border border-border/50 w-fit">
-            <RefreshCw className="w-3.5 h-3.5 animate-spin text-teal-600" />
+          <div className="chat-loading-row">
+            <RefreshCw size={14} className="spinning text-primary" />
             <span>Verifying results against clinical rules engine...</span>
           </div>
         )}
@@ -373,22 +365,17 @@ export default function ChatAssistant({
           e.preventDefault();
           handleSend();
         }}
-        className="p-3 bg-card border-t border-border flex items-center gap-2 shrink-0"
+        className="chat-input-bar"
       >
         {/* Voice Speech-to-Text Button */}
         <button
           type="button"
           onClick={toggleMic}
-          className={`p-2 rounded-xl transition-all
-            ${isListening
-              ? "bg-red-500 text-white animate-pulse shadow-md shadow-red-500/30"
-              : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
-            }
-          `}
+          className={`mic-btn ${isListening ? "listening" : ""}`}
           title={isListening ? "Listening... click to stop" : "Speak to Assistant"}
           aria-label="Microphone voice input"
         >
-          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          {isListening ? <MicOff size={16} /> : <Mic size={16} />}
         </button>
 
         <input
@@ -397,17 +384,17 @@ export default function ChatAssistant({
           onChange={(e) => setInput(e.target.value)}
           placeholder={isListening ? t.listening : t.inputPlaceholder}
           disabled={isLoading}
-          className="flex-1 bg-secondary/70 border border-border/60 rounded-xl px-3.5 py-2 text-sm text-foreground outline-none focus:border-teal-500 transition-colors"
+          className="chat-text-input"
         />
 
         <button
           type="submit"
           disabled={isLoading || !input.trim()}
-          className="p-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-xs"
+          className="send-btn"
           title="Send message"
           aria-label="Send message"
         >
-          <Send className="w-4 h-4" />
+          <Send size={16} />
         </button>
       </form>
     </div>
