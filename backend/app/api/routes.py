@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query
+from typing import List, Optional, Dict, Any
 from pathlib import Path
 
 from app.config import LAB_REPORTS_DIR, APP_NAME, VERSION
@@ -14,8 +14,10 @@ from app.schemas import (
 )
 from app.core.parser import load_all_reports, parse_patient_file
 from app.core.classifier import classify_test_result
-from app.core.privacy import validate_privacy_context
-from app.core.summary import generate_layman_summary, MANDATORY_DISCLAIMER
+from app.core.summary import MANDATORY_DISCLAIMER
+from app.services.llm_provider import llm_manager
+from app.services.explainer import generate_enhanced_explanation
+from app.services.chat import handle_patient_chat
 
 router = APIRouter(prefix="/api")
 
@@ -38,8 +40,14 @@ def health_check():
         "app": APP_NAME,
         "version": VERSION,
         "reports_loaded": len(cache),
-        "reports_dir": str(LAB_REPORTS_DIR)
+        "reports_dir": str(LAB_REPORTS_DIR),
+        "provider_status": llm_manager.get_provider_status(),
     }
+
+@router.get("/providers")
+def get_providers():
+    """Returns the priority status and availability of all LLM providers."""
+    return llm_manager.get_provider_status()
 
 @router.get("/reports", response_model=List[ReportMetadata])
 def list_reports():
@@ -111,8 +119,8 @@ def analyze_report(request: AnalysisRequest):
             has_urgent = True
         classified_results.append(classified)
 
-    # Generate layman explanation, 3-5 doctor questions, urgent warning
-    summary, doctor_questions, urgent_warning = generate_layman_summary(
+    # Generate layman explanation through LLM layer with guardrails & fallback
+    summary, doctor_questions, urgent_warning, provider_used = generate_enhanced_explanation(
         patient_name=report.patient_name,
         results=classified_results,
         is_demographics_missing=demographics_missing,
@@ -140,7 +148,8 @@ def analyze_report(request: AnalysisRequest):
         results=classified_results,
         layman_summary=summary,
         doctor_questions=doctor_questions,
-        disclaimer=MANDATORY_DISCLAIMER
+        disclaimer=MANDATORY_DISCLAIMER,
+        provider_used=provider_used,
     )
 
 @router.post("/chat", response_model=ChatResponse)
@@ -152,53 +161,23 @@ def patient_chat(request: ChatRequest):
 
     active_report = cache[pid]
 
-    # Privacy context-lock validation (Directive 1)
-    is_allowed, refusal_msg, reason = validate_privacy_context(active_report, request.query)
-    if not is_allowed:
-        return ChatResponse(
-            active_patient_id=active_report.patient_id,
-            allowed=False,
-            response=refusal_msg,
-            reason=reason
-        )
-
-    # Perform classification for current patient to ground response
+    # Perform deterministic classification for active patient to provide ground truth
     classified_results = [
         classify_test_result(r, active_report.recorded_age, active_report.biological_sex)
         for r in active_report.raw_results
     ]
 
-    summary, questions, urgent_warning = generate_layman_summary(
-        patient_name=active_report.patient_name,
-        results=classified_results,
-        is_demographics_missing=(active_report.is_age_missing or active_report.is_sex_missing)
+    # Process through contextual chat service with prompt-injection defense and privacy lock
+    allowed, response_text, reason, provider_used = handle_patient_chat(
+        active_report=active_report,
+        classified_results=classified_results,
+        raw_query=request.query
     )
-
-    # Contextual grounded response
-    clean_q = request.query.lower()
-    resp_lines = []
-
-    if "urgent" in clean_q or "critical" in clean_q or "danger" in clean_q:
-        if urgent_warning:
-            resp_lines.append(f"⚠️ {urgent_warning}")
-        else:
-            resp_lines.append("None of your lab tests were at critical or urgent danger levels.")
-    elif "question" in clean_q or "doctor" in clean_q or "ask" in clean_q:
-        resp_lines.append("Here are suggested questions to ask your physician during your next visit:")
-        for i, q in enumerate(questions, 1):
-            resp_lines.append(f"{i}. {q}")
-    else:
-        # Provide general test status overview
-        resp_lines.append(f"Regarding the laboratory report for {active_report.patient_name} ({active_report.mrn}):")
-        for res in classified_results:
-            resp_lines.append(f"- **{res.reported_test}**: Result is {res.reported_value} {res.reported_unit or ''} (Status: {res.status}). {res.status_reason}")
-        if urgent_warning:
-            resp_lines.append(f"\n🚨 {urgent_warning}")
-        resp_lines.append(f"\n{MANDATORY_DISCLAIMER}")
 
     return ChatResponse(
         active_patient_id=active_report.patient_id,
-        allowed=True,
-        response="\n".join(resp_lines),
-        reason="Context valid and patient-isolated."
+        allowed=allowed,
+        response=response_text,
+        reason=reason,
+        provider_used=provider_used,
     )

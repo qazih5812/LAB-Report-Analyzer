@@ -65,6 +65,7 @@ class AnalysisResponse(BaseModel):
     layman_summary: str
     doctor_questions: List[str] = []
     disclaimer: str
+    provider_used: str = "deterministic"
 
 class ChatRequest(BaseModel):
     active_patient_id: str
@@ -75,3 +76,4 @@ class ChatResponse(BaseModel):
     allowed: bool
     response: str
     reason: Optional[str] = None
+    provider_used: str = "deterministic"

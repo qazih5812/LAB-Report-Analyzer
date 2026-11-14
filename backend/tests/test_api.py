@@ -1,6 +1,6 @@
 import pytest
 from fastapi import HTTPException
-from app.api.routes import health_check, list_reports, get_report, analyze_report, patient_chat
+from app.api.routes import health_check, list_reports, get_report, analyze_report, patient_chat, get_providers
 from app.schemas import AnalysisRequest, ChatRequest
 
 def test_health_endpoint():
@@ -8,6 +8,15 @@ def test_health_endpoint():
     assert data["status"] == "healthy"
     assert data["reports_loaded"] == 14
     assert "CityLab Diagnostics" in data["app"]
+    assert "provider_status" in data
+
+def test_providers_endpoint():
+    prov = get_providers()
+    assert "gemini" in prov
+    assert "groq" in prov
+    assert "openrouter" in prov
+    assert "deterministic_fallback" in prov
+    assert prov["gemini"]["priority"] == 1
 
 def test_list_reports_endpoint():
     reports = list_reports()
