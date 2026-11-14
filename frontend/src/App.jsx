@@ -7,6 +7,7 @@ import BiomarkerCard from './components/BiomarkerCard';
 import DoctorQuestions from './components/DoctorQuestions';
 import ChatAssistant from './components/ChatAssistant';
 import UploadModal from './components/UploadModal';
+import { apiUrl } from './api';
 import {
   Sparkles,
   AlertCircle,
@@ -38,7 +39,7 @@ export default function App() {
         override_sex: overrideSex,
       };
 
-      const res = await fetch('/api/analyze', {
+      const res = await fetch(apiUrl('/api/analyze'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -65,8 +66,8 @@ export default function App() {
         setIsLoading(true);
         // Fetch health & providers
         const [provRes, repsRes] = await Promise.all([
-          fetch('/api/providers'),
-          fetch('/api/reports')
+          fetch(apiUrl('/api/providers')),
+          fetch(apiUrl('/api/reports'))
         ]);
 
         if (provRes.ok) {

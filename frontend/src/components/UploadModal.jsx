@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiUrl } from '../api';
 import { Upload, X, FileText, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
@@ -43,7 +44,7 @@ export default function UploadModal({ isOpen, onClose, onUploadSuccess }) {
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/upload', {
+      const res = await fetch(apiUrl('/api/upload'), {
         method: 'POST',
         body: formData,
       });

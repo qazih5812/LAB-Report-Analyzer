@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { apiUrl } from '../api';
 import { MessageSquare, Send, ShieldCheck, ShieldAlert, Sparkles, RefreshCw, X } from 'lucide-react';
 
 export default function ChatAssistant({ activePatient, isOpen, onToggle }) {
@@ -31,7 +32,7 @@ export default function ChatAssistant({ activePatient, isOpen, onToggle }) {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(apiUrl('/api/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

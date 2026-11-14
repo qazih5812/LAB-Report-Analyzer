@@ -9,10 +9,18 @@ app = FastAPI(
     description="Deterministic Medical Lab Report Explainer for Tech Fusion '26 (Problem Statement B)."
 )
 
-# Enable CORS for frontend integration
+# Enable CORS for local dev and live cloud deployment (Vercel, Netlify, Render, Docker)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:80",
+        "http://localhost",
+    ],
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
